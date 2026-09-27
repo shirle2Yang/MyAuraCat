@@ -79,6 +79,10 @@ function shade(hex,amt){ // amt -1..1, 负=变暗
   r=Math.round((f-r)*t)+r; g=Math.round((f-g)*t)+g; b=Math.round((f-b)*t)+b;
   return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
 }
+function hexToRgb(hex){
+  const c=parseInt(hex.slice(1),16);
+  return [(c>>16)&255,(c>>8)&255,c&255];
+}
 
 /* ---------- 能量判定 ---------- */
 function classify(r,g,b){
@@ -94,7 +98,7 @@ function classify(r,g,b){
   return 'pink';               // 品红→粉
 }
 
-/* ---------- 图片处理：显影 + 取手边缘光晕 ---------- */
+/* ---------- 图片处理：显影 + 手边缘能量光晕 ---------- */
 function processImage(img){
   const max=1000;
   const scale=Math.min(1, max/Math.max(img.naturalWidth,img.naturalHeight));
@@ -104,30 +108,19 @@ function processImage(img){
   const d=ctx.getImageData(0,0,w,h); const px=d.data;
   const total=w*h;
   const mask=new Uint8Array(total);       // 1=主体（非白墙/非死黑）
-  const expo=Math.pow(2, EXPOSURE/100);   // 曝光 -100 → ×0.5
-  const sat=Math.min(1, 1+SATURATION/100);// 饱和 +100 → s=1
 
-  let sr=0,sg=0,sb=0,sn=0;                // 主体平均（回退用）
+  /* 第一遍：建主体掩膜 + 记主体平均（回退用） */
+  let sr=0,sg=0,sb=0,sn=0;
   for(let i=0;i<px.length;i+=4){
     const idx=i>>2;
     const r=px[i],g=px[i+1],b=px[i+2];
     const mx=Math.max(r,g,b), mn=Math.min(r,g,b);
     const isWhite=mx>235&&(mx-mn)<18;     // 白墙背景
     const isDark=mx<25;                   // 死黑
-    if(!isWhite&&!isDark){
-      mask[idx]=1; sr+=r; sg+=g; sb+=b; sn++;
-    }
-    // 显影：曝光 -100 + 饱和 +100（在 HSL 上做）
-    const {h:hh,s:ss,l:ll}=rgb2hsl(r,g,b);
-    const nl=Math.max(0,ll*expo);
-    const ns=Math.min(1,ss*sat);
-    const nr=hsl2rgb(hh,ns,nl);
-    px[i]=nr[0]; px[i+1]=nr[1]; px[i+2]=nr[2];
+    if(!isWhite&&!isDark){ mask[idx]=1; sr+=r; sg+=g; sb+=b; sn++; }
   }
-  ctx.putImageData(d,0,0);
 
-  /* 第二遍：在显影后的图上取「手边缘的光晕」——
-     只统计主体中靠近背景边界的边缘带像素（不是墙体，也不是全手平均） */
+  /* 第二遍：取「手边缘的光晕」颜色——主体中靠近背景边界的边缘带像素 */
   const R=4;                              // 边缘带厚度（px）
   let er=0,eg=0,eb=0,en=0;
   for(let y=0;y<h;y++){
@@ -142,22 +135,50 @@ function processImage(img){
           if(!mask[ny*w+nx]) edge=true;   // 邻域内有背景 → 属于边缘带
         }
       }
-      if(edge){
-        const p=idx*4; er+=px[p]; eg+=px[p+1]; eb+=px[p+2]; en++;
-      }
+      if(edge){ const p=idx*4; er+=px[p]; eg+=px[p+1]; eb+=px[p+2]; en++; }
     }
   }
   let skin;
-  if(en >= total*0.001){                  // 边缘带样本充足 → 用光晕色
-    skin=[er/en, eg/en, eb/en];
-  } else if(sn>0){                        // 回退：全主体平均
-    skin=[sr/sn, sg/sn, sb/sn];
-  } else {                                // 再回退：中心区域
+  if(en >= total*0.001){ skin=[er/en,eg/en,eb/en]; }      // 边缘带样本充足 → 用光晕色
+  else if(sn>0){ skin=[sr/sn,sg/sn,sb/sn]; }              // 回退：全主体平均
+  else {                                                   // 再回退：中心区域
     const x0=Math.floor(w*0.3),x1=Math.floor(w*0.7),y0=Math.floor(h*0.3),y1=Math.floor(h*0.7);
     let cr=0,cg=0,cb=0,cn=0;
     for(let y=y0;y<y1;y++) for(let x=x0;x<x1;x++){ const i=(y*w+x)*4; cr+=px[i]; cg+=px[i+1]; cb+=px[i+2]; cn++; }
     skin=[cr/cn, cg/cn, cb/cn];
   }
+  const eColor = ENERGY[classify(skin[0],skin[1],skin[2])].color;
+  const ec = hexToRgb(eColor);
+
+  /* 第三遍：底图做曝光 -100 / 饱和 +100 显影 */
+  const expo=Math.pow(2, EXPOSURE/100);   // 曝光 -100 → ×0.5
+  const sat=Math.min(1, 1+SATURATION/100);// 饱和 +100 → s=1
+  for(let i=0;i<px.length;i+=4){
+    const {h:hh,s:ss,l:ll}=rgb2hsl(px[i],px[i+1],px[i+2]);
+    const nr=hsl2rgb(hh, Math.min(1,ss*sat), Math.max(0,ll*expo));
+    px[i]=nr[0]; px[i+1]=nr[1]; px[i+2]=nr[2];
+  }
+  ctx.putImageData(d,0,0);
+
+  /* 光晕层：把主体填成能量色 → 模糊 → 以 screen 叠回，形成手边可见的彩色光晕 */
+  const glow=document.createElement('canvas'); glow.width=w; glow.height=h;
+  const gctx=glow.getContext('2d');
+  const gd=gctx.createImageData(w,h);
+  for(let i=0;i<total;i++){
+    const p=i*4;
+    if(mask[i]){ gd.data[p]=ec[0]; gd.data[p+1]=ec[1]; gd.data[p+2]=ec[2]; gd.data[p+3]=255; }
+  }
+  gctx.putImageData(gd,0,0);
+  const blur=document.createElement('canvas'); blur.width=w; blur.height=h;
+  const bctx=blur.getContext('2d');
+  bctx.filter='blur(18px)';
+  bctx.drawImage(glow,0,0);
+  ctx.save();
+  ctx.globalCompositeOperation='screen';
+  ctx.globalAlpha=0.8;
+  ctx.drawImage(blur,0,0);
+  ctx.restore();
+
   return {canvas:cv, skin};
 }
 
@@ -287,8 +308,8 @@ $('#restart').addEventListener('click',()=>{
   window.scrollTo({top:0, behavior:'smooth'});
 });
 
-/* 下载分享卡 PNG（canvas 手绘） */
-$('#downloadPng').addEventListener('click', async ()=>{
+/* 保存结果（分享卡 PNG，canvas 手绘） */
+$('#saveResult').addEventListener('click', async ()=>{
   const e=currentEnergy(); if(!e) return;
   try{
     const catImg=await loadImg(e.cat.img);
@@ -302,11 +323,30 @@ $('#downloadPng').addEventListener('click', async ()=>{
   }catch(err){ showError('生成分享卡失败：'+err.message); }
 });
 
-/* 保存猫咪原图 PNG */
-$('#downloadCat').addEventListener('click', ()=>{
+/* 偷走小猫（保存猫咪原图 PNG） */
+$('#stealCat').addEventListener('click', ()=>{
   const e=currentEnergy(); if(!e) return;
   const a=document.createElement('a');
   a.href=e.cat.img; a.download=e.cat.breed+'.png'; a.click();
+});
+
+/* 分享链接（复制当前页地址 / 调起系统分享） */
+$('#shareLink').addEventListener('click', async ()=>{
+  const e=currentEnergy();
+  const url=location.href.split('#')[0] + (e ? ('#e='+e.name) : '');
+  try{
+    if(navigator.share){
+      await navigator.share({ title:'测测你的能量场能吸引到哪只猫咪', text:'我的能量光是 '+ (e?e.name:'？') +'，快来测测你的同频猫～', url });
+    } else {
+      await navigator.clipboard.writeText(url);
+      showError('链接已复制到剪贴板，去粘贴分享吧～');
+      setTimeout(hideError, 2200);
+    }
+  }catch(err){
+    if(err && err.name==='AbortError') return;
+    try{ await navigator.clipboard.writeText(url); showError('链接已复制，去粘贴分享吧～'); setTimeout(hideError,2200); }
+    catch(_){ showError('复制失败，请手动复制地址栏链接。'); }
+  }
 });
 
 /* 渲染能量表 */
