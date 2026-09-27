@@ -9,9 +9,15 @@
 <body>
 <div class="app">
   <header class="hero">
-    <div class="kicker">AI Vibe Coding · 引流钩子 Demo</div>
     <h1>测测你的能量场<br/>能吸引到哪只猫咪 🐱</h1>
-    <p class="lead">在自然光下、白墙前拍一张<b>手背照</b>上传，AI 会做「曝光↓ 饱和↑」能量显影，解析你的能量光，并为你匹配一只同频的猫。</p>
+    <div class="tutorial card-tape">
+      <div class="tutorial-title">📸 拍照教程</div>
+      <ol class="tutorial-steps">
+        <li>在一面白墙前，手微张、掌心朝墙距离 5~10cm</li>
+        <li>用原相机拍下手背，不开滤镜、不加美颜</li>
+        <li>上传图片，等 AI 解析</li>
+      </ol>
+    </div>
   </header>
 
   <!-- 上传区 -->
@@ -29,7 +35,7 @@
 
   <!-- 显影预览 -->
   <section id="previewWrap" class="preview-wrap" hidden>
-    <div class="preview-label">能量显影（曝光↓ 饱和↑ 处理后的 aura 效果）</div>
+    <div class="preview-label">能量显影（曝光 -100 · 饱和 +100，看手边缘的光晕）</div>
     <div id="canvasBox" class="canvas-box"></div>
   </section>
 
@@ -53,7 +59,7 @@
 
     <div class="actions">
       <button id="downloadPng" class="btn primary">保存分享卡 (PNG)</button>
-      <button id="downloadSvg" class="btn">下载猫咪图 (SVG)</button>
+      <button id="downloadCat" class="btn">保存猫咪图 (PNG)</button>
       <button id="restart" class="btn ghost">再测一次</button>
     </div>
   </section>
@@ -68,7 +74,7 @@
   </section>
 
   <footer class="foot">
-    纯前端 · 零依赖 · 图片与判定均在本地浏览器完成，不会上传服务器 · 可一键托管 GitHub Pages
+    纯前端 · 零依赖 · 图片与判定均在本地浏览器完成，不会上传服务器
   </footer>
 </div>
 

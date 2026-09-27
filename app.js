@@ -1,49 +1,53 @@
 /* =====================================================================
-   能量场测猫 · 纯前端 Demo
-   - 上传手背照 → Canvas 曝光↓饱和↑ 显影
-   - 检测白墙背景下的手部肤色 → 按 HSL 判定 9 种能量光
-   - 能量 → 猫性格 → 品种 → 参数化 SVG 生成
+   能量场测猫 · 纯前端 Demo（手帐治愈画风）
+   - 上传手背照 → Canvas 曝光 -100 / 饱和 +100 显影
+   - 取手边缘的光晕（而非墙体/全手平均）→ 按 HSL 判定 9 种能量光
+   - 能量 → 猫性格 → 品种 PNG 图 + 手帐风分享卡
    - 全部本地运行，零依赖，可直接托管 GitHub Pages
    ===================================================================== */
+
+/* ---------- 处理参数（对应修图滑杆：曝光 -100 · 饱和 +100） ---------- */
+const EXPOSURE = -100;   // 曝光 -100 ≈ 减一档，亮度 ×0.5
+const SATURATION = 100;  // 饱和 +100 = 拉满（s→1）
 
 /* ---------- 九色能量场表（含文化溯源，仅供参考/娱乐向） ---------- */
 const ENERGY = {
   gray:  { name:'灰光', color:'#9aa0a8', meaning:'情绪差、身体不佳',
     ref:'西医 aura 研究称灰/浊色代表能量耗竭、疲惫（colorwithleo）。',
-    cat:{ breed:'英国短毛猫', personality:'沉稳治愈，像一位不说话却一直在的陪伴者。',
-          fur:'#9aa0a8', eye:'#5b6470', pattern:'solid', ear:'round' } },
+    cat:{ breed:'英短', img:'cats/british.png',
+          personality:'沉稳治愈，像一位不说话却一直在的陪伴者。' } },
   black: { name:'黑光', color:'#2b2b30', meaning:'身处混沌',
     ref:'中医五色「黑属水、主肾虚/混沌」；西方 aura 黑=负面能量堆积。',
-    cat:{ breed:'孟买猫', personality:'神秘而护主，在混沌里替你守住一处光。',
-          fur:'#2b2b30', eye:'#f2c84b', pattern:'solid', ear:'round' } },
+    cat:{ breed:'黑猫', img:'cats/black.png',
+          personality:'神秘而护主，在混沌里替你守住一处光。' } },
   blue:  { name:'蓝光', color:'#5b8fd6', meaning:'心平气和、定力十足',
     ref:'aura 蓝=宁静、直觉、深度（colorwithleo / easternalignment）。',
-    cat:{ breed:'俄罗斯蓝猫', personality:'清冷自持，定力如山，陪你安静地待着。',
-          fur:'#8aa0c8', eye:'#2f6db0', pattern:'solid', ear:'round' } },
+    cat:{ breed:'蓝猫', img:'cats/blue.png',
+          personality:'清冷自持，定力如山，陪你安静地待着。' } },
   pink:  { name:'粉光', color:'#f3a6c0', meaning:'幸福感强',
     ref:'aura 粉=爱、温暖、柔软、治愈（easternalignment）。',
-    cat:{ breed:'布偶猫', personality:'黏人爱撒娇，把幸福感直接蹭到你脸上。',
-          fur:'#f3c6cf', eye:'#4f9d7a', pattern:'point', ear:'round' } },
+    cat:{ breed:'布偶', img:'cats/ragdoll.png',
+          personality:'黏人爱撒娇，把幸福感直接蹭到你脸上。' } },
   red:   { name:'红光', color:'#e8503f', meaning:'正直、行大运中',
     ref:'aura 红=活力、勇气、行动力（搜狗百科·人体辉光）。',
-    cat:{ breed:'橘猫（黄狸）', personality:'招财又率真，正直的人自带红运气场。',
-          fur:'#e8943f', eye:'#3a5a40', pattern:'tabby', ear:'round' } },
+    cat:{ breed:'橘猫', img:'cats/orange.png',
+          personality:'招财又率真，正直的人自带红运气场。' } },
   green: { name:'绿光', color:'#5fae6b', meaning:'身心健康',
     ref:'中医青/肝主疏泄；aura 绿=疗愈、成长、平衡（easternalignment）。',
-    cat:{ breed:'缅因猫', personality:'温和的巨人，身心稳稳当当，给你踏实感。',
-          fur:'#7fae6b', eye:'#caa64a', pattern:'tabby', ear:'tuft' } },
+    cat:{ breed:'缅因', img:'cats/maine.png',
+          personality:'温和的巨人，身心稳稳当当，给你踏实感。' } },
   white: { name:'白光', color:'#eef0f3', meaning:'善良',
     ref:'中医白属金/肺、主纯净；aura 白=纯净、本真（colorwithleo）。',
-    cat:{ breed:'白色波斯猫', personality:'温润纯善，像一束不刺眼的光。',
-          fur:'#f4f1ea', eye:'#8a8f99', pattern:'solid', ear:'round' } },
+    cat:{ breed:'白色波斯', img:'cats/persian.png',
+          personality:'温润纯善，像一束不刺眼的光。' } },
   gold:  { name:'金光', color:'#e8c24a', meaning:'得道、智慧',
     ref:'aura 金=高灵性、智慧（easternalignment）；五行「黄为土、在色为黄」。',
-    cat:{ breed:'金渐层', personality:'通透沉静，自带智慧气场，不争而全。',
-          fur:'#e8c66a', eye:'#7a5a2a', pattern:'solid', ear:'round' } },
+    cat:{ breed:'金渐层', img:'cats/golden.png',
+          personality:'通透沉静，自带智慧气场，不争而全。' } },
   purple:{ name:'紫光', color:'#9b6fd6', meaning:'灵性高、洞察力强',
     ref:'aura 紫=灵性、超感、转化（colorwithleo / 搜狗百科·人体辉光）。',
-    cat:{ breed:'暹罗猫', personality:'敏锐善察，灵性十足，像能看透你心思的伙伴。',
-          fur:'#b9a7d6', eye:'#3f7d6e', pattern:'point', ear:'point' } },
+    cat:{ breed:'暹罗', img:'cats/siamese.png',
+          personality:'敏锐善察，灵性十足，像能看透你心思的伙伴。' } },
 };
 
 /* ---------- 颜色工具 ---------- */
@@ -90,7 +94,7 @@ function classify(r,g,b){
   return 'pink';               // 品红→粉
 }
 
-/* ---------- 图片处理：显影 + 取手部肤色 ---------- */
+/* ---------- 图片处理：显影 + 取手边缘光晕 ---------- */
 function processImage(img){
   const max=1000;
   const scale=Math.min(1, max/Math.max(img.naturalWidth,img.naturalHeight));
@@ -98,107 +102,116 @@ function processImage(img){
   const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
   const ctx=cv.getContext('2d'); ctx.drawImage(img,0,0,w,h);
   const d=ctx.getImageData(0,0,w,h); const px=d.data;
+  const total=w*h;
+  const mask=new Uint8Array(total);       // 1=主体（非白墙/非死黑）
+  const expo=Math.pow(2, EXPOSURE/100);   // 曝光 -100 → ×0.5
+  const sat=Math.min(1, 1+SATURATION/100);// 饱和 +100 → s=1
 
-  let sr=0,sg=0,sb=0,sn=0, total=px.length/4;
+  let sr=0,sg=0,sb=0,sn=0;                // 主体平均（回退用）
   for(let i=0;i<px.length;i+=4){
-    let r=px[i],g=px[i+1],b=px[i+2];
+    const idx=i>>2;
+    const r=px[i],g=px[i+1],b=px[i+2];
     const mx=Math.max(r,g,b), mn=Math.min(r,g,b);
     const isWhite=mx>235&&(mx-mn)<18;     // 白墙背景
-    const isDark=mx<25;
-    if(!isWhite&&!isDark){ sr+=r; sg+=g; sb+=b; sn++; }
-    // 显影：曝光↓（压暗）+ 饱和↑（拉满）
-    const {h,s,l}=rgb2hsl(r,g,b);
-    const nr=hsl2rgb(h,1.0,Math.max(0,l*0.42));
+    const isDark=mx<25;                   // 死黑
+    if(!isWhite&&!isDark){
+      mask[idx]=1; sr+=r; sg+=g; sb+=b; sn++;
+    }
+    // 显影：曝光 -100 + 饱和 +100（在 HSL 上做）
+    const {h:hh,s:ss,l:ll}=rgb2hsl(r,g,b);
+    const nl=Math.max(0,ll*expo);
+    const ns=Math.min(1,ss*sat);
+    const nr=hsl2rgb(hh,ns,nl);
     px[i]=nr[0]; px[i+1]=nr[1]; px[i+2]=nr[2];
   }
   ctx.putImageData(d,0,0);
 
-  // 手部肤色不足则回退到中心区域
+  /* 第二遍：在显影后的图上取「手边缘的光晕」——
+     只统计主体中靠近背景边界的边缘带像素（不是墙体，也不是全手平均） */
+  const R=4;                              // 边缘带厚度（px）
+  let er=0,eg=0,eb=0,en=0;
+  for(let y=0;y<h;y++){
+    for(let x=0;x<w;x++){
+      const idx=y*w+x;
+      if(!mask[idx]) continue;
+      let edge=false;
+      for(let dy=-R;dy<=R&&!edge;dy+=2){
+        const ny=y+dy; if(ny<0||ny>=h) continue;
+        for(let dx=-R;dx<=R&&!edge;dx+=2){
+          const nx=x+dx; if(nx<0||nx>=w) continue;
+          if(!mask[ny*w+nx]) edge=true;   // 邻域内有背景 → 属于边缘带
+        }
+      }
+      if(edge){
+        const p=idx*4; er+=px[p]; eg+=px[p+1]; eb+=px[p+2]; en++;
+      }
+    }
+  }
   let skin;
-  if(sn < total*0.02){
+  if(en >= total*0.001){                  // 边缘带样本充足 → 用光晕色
+    skin=[er/en, eg/en, eb/en];
+  } else if(sn>0){                        // 回退：全主体平均
+    skin=[sr/sn, sg/sn, sb/sn];
+  } else {                                // 再回退：中心区域
     const x0=Math.floor(w*0.3),x1=Math.floor(w*0.7),y0=Math.floor(h*0.3),y1=Math.floor(h*0.7);
     let cr=0,cg=0,cb=0,cn=0;
     for(let y=y0;y<y1;y++) for(let x=x0;x<x1;x++){ const i=(y*w+x)*4; cr+=px[i]; cg+=px[i+1]; cb+=px[i+2]; cn++; }
     skin=[cr/cn, cg/cn, cb/cn];
-  } else {
-    skin=[sr/sn, sg/sn, sb/sn];
   }
   return {canvas:cv, skin};
 }
 
-/* ---------- 猫 SVG（参数化） ---------- */
-function catInner(e){
-  const c=e.cat, fur=c.fur;
-  const dark=shade(fur,-0.28), light=shade(fur,0.4);
-  const earFill=(c.pattern==='point')?dark:fur;
-  const earInner=shade((c.pattern==='point')?dark:fur,0.3);
-  let stripes='';
-  if(c.pattern==='tabby'){
-    stripes=`<path d="M120 74 L115 104 M103 78 L98 106 M137 78 L142 106" stroke="${dark}" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.55"/>`;
-  }
-  let mask='';
-  if(c.pattern==='point'){
-    mask=`<path d="M52 82 L42 28 L102 70 Z" fill="${dark}"/><path d="M188 82 L198 28 L138 70 Z" fill="${dark}"/>
-          <ellipse cx="120" cy="152" rx="36" ry="28" fill="${dark}" opacity="0.85"/>`;
-  }
-  const tuft=(c.ear==='tuft')?`<path d="M58 70 L52 50 L66 64 Z" fill="${dark}"/><path d="M182 70 L188 50 L174 64 Z" fill="${dark}"/>`:'';
-  return `
-    <defs>
-      <radialGradient id="glow" cx="50%" cy="46%" r="56%">
-        <stop offset="0%" stop-color="${e.color}" stop-opacity="0.55"/>
-        <stop offset="60%" stop-color="${e.color}" stop-opacity="0.16"/>
-        <stop offset="100%" stop-color="${e.color}" stop-opacity="0"/>
-      </radialGradient>
-    </defs>
-    <circle cx="120" cy="120" r="116" fill="url(#glow)"/>
-    <path d="M52 82 L42 28 L102 70 Z" fill="${earFill}"/>
-    <path d="M188 82 L198 28 L138 70 Z" fill="${earFill}"/>
-    <path d="M60 76 L54 44 L92 68 Z" fill="${earInner}"/>
-    <path d="M180 76 L186 44 L148 68 Z" fill="${earInner}"/>
-    ${tuft}
-    ${mask}
-    <ellipse cx="120" cy="132" rx="80" ry="72" fill="${fur}"/>
-    ${stripes}
-    <ellipse cx="92" cy="128" rx="15" ry="19" fill="${light}" opacity="0.5"/>
-    <ellipse cx="148" cy="128" rx="15" ry="19" fill="${light}" opacity="0.5"/>
-    <ellipse cx="92" cy="128" rx="15" ry="19" fill="#fff"/>
-    <ellipse cx="148" cy="128" rx="15" ry="19" fill="#fff"/>
-    <ellipse cx="92" cy="128" rx="6" ry="14" fill="#15151a"/>
-    <ellipse cx="148" cy="128" rx="6" ry="14" fill="#15151a"/>
-    <circle cx="88" cy="122" r="3.5" fill="#fff"/>
-    <circle cx="144" cy="122" r="3.5" fill="#fff"/>
-    <ellipse cx="92" cy="128" rx="15" ry="19" fill="${c.eye}" opacity="0.28"/>
-    <ellipse cx="148" cy="128" rx="15" ry="19" fill="${c.eye}" opacity="0.28"/>
-    <path d="M114 150 L126 150 L120 158 Z" fill="#3a2a2a" opacity="0.7"/>
-    <path d="M120 158 Q112 168 104 162 M120 158 Q128 168 136 162" stroke="#3a3a3a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-    <path d="M70 140 L30 132 M70 150 L32 152 M170 140 L210 132 M170 150 L208 152" stroke="#d8d8d8" stroke-width="2" stroke-linecap="round"/>
-  `;
-}
-function buildCat(e){
-  return `<svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" width="240" height="240">${catInner(e)}</svg>`;
+/* ---------- 工具：加载图片 ---------- */
+function loadImg(src){
+  return new Promise((res,rej)=>{
+    const im=new Image();
+    im.onload=()=>res(im); im.onerror=()=>rej(new Error('图片加载失败：'+src));
+    im.src=src;
+  });
 }
 
-/* ---------- 分享卡 SVG（可转 PNG） ---------- */
-function buildShareCard(e){
-  const inner=catInner(e);
-  return `<svg viewBox="0 0 600 800" xmlns="http://www.w3.org/2000/svg" width="600" height="800">
-    <defs>
-      <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="${shade(e.color,-0.55)}"/>
-        <stop offset="100%" stop-color="#0f1226"/>
-      </linearGradient>
-    </defs>
-    <rect width="600" height="800" fill="url(#bg)"/>
-    <text x="300" y="74" text-anchor="middle" fill="#fff" font-size="30" font-weight="700" font-family="PingFang SC,Microsoft YaHei,sans-serif">能量场 · 专属同频猫</text>
-    <text x="300" y="106" text-anchor="middle" fill="#cdd2ea" font-size="15" font-family="PingFang SC,Microsoft YaHei,sans-serif">测测你的能量场能吸引到哪只猫咪</text>
-    <circle cx="300" cy="190" r="44" fill="${e.color}" stroke="#fff" stroke-opacity="0.3" stroke-width="3"/>
-    <text x="300" y="268" text-anchor="middle" fill="${e.color}" font-size="30" font-weight="700" font-family="PingFang SC,Microsoft YaHei,sans-serif">${e.name}</text>
-    <text x="300" y="300" text-anchor="middle" fill="#fff" font-size="17" font-family="PingFang SC,Microsoft YaHei,sans-serif">${e.meaning}</text>
-    <g transform="translate(180,340)">${inner}</g>
-    <text x="300" y="612" text-anchor="middle" fill="#fff" font-size="22" font-weight="700" font-family="PingFang SC,Microsoft YaHei,sans-serif">${e.cat.breed}</text>
-    <text x="300" y="646" text-anchor="middle" fill="#cdd2ea" font-size="14" font-family="PingFang SC,Microsoft YaHei,sans-serif">${e.cat.personality}</text>
-    <text x="300" y="760" text-anchor="middle" fill="#8b93bd" font-size="12" font-family="PingFang SC,Microsoft YaHei,sans-serif">娱乐向测试 · 非科学诊断</text>
-  </svg>`;
+/* ---------- 手帐风分享卡（canvas 绘制 → PNG） ---------- */
+function drawShareCard(ctx, e, catImg){
+  const W=600,H=800;
+  // 纸张底
+  ctx.fillStyle='#fbf5e9'; ctx.fillRect(0,0,W,H);
+  // 点阵纹理
+  ctx.fillStyle='rgba(190,160,110,.10)';
+  for(let y=40;y<H;y+=36) for(let x=40;x<W;x+=36){ ctx.beginPath(); ctx.arc(x,y,1.4,0,7); ctx.fill(); }
+  // 能量色晕
+  const glow=ctx.createRadialGradient(W/2,470,40,W/2,470,250);
+  glow.addColorStop(0,e.color+'66'); glow.addColorStop(1,e.color+'00');
+  ctx.fillStyle=glow; ctx.fillRect(0,220,W,520);
+  // 顶部和纸胶带
+  ctx.save(); ctx.translate(W/2,34); ctx.rotate(-0.03);
+  ctx.fillStyle=e.color+'99'; ctx.fillRect(-70,-14,140,28); ctx.restore();
+  // 文案
+  ctx.textAlign='center'; ctx.fillStyle='#5b4a3a';
+  ctx.font='700 30px "PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillText('能量场 · 专属同频猫', W/2, 106);
+  ctx.font='15px "PingFang SC","Microsoft YaHei",sans-serif'; ctx.fillStyle='#8a7660';
+  ctx.fillText('测测你的能量场能吸引到哪只猫咪', W/2, 136);
+  // 能量圆点 + 名称
+  ctx.beginPath(); ctx.arc(W/2,190,26,0,7); ctx.fillStyle=e.color; ctx.fill();
+  ctx.lineWidth=3; ctx.strokeStyle='#fffdf6'; ctx.stroke();
+  ctx.font='700 30px "PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillStyle=shade(e.color,-0.25); ctx.fillText(e.name, W/2, 262);
+  ctx.font='17px "PingFang SC","Microsoft YaHei",sans-serif'; ctx.fillStyle='#5b4a3a';
+  ctx.fillText(e.meaning, W/2, 294);
+  // 猫图（圆角）
+  const s=320, x=(W-s)/2, y=330, r=22;
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.arcTo(x+s,y,x+s,y+s,r); ctx.arcTo(x+s,y+s,x,y+s,r);
+  ctx.arcTo(x,y+s,x,y,r); ctx.arcTo(x,y,x+s,y,r); ctx.closePath();
+  ctx.clip(); ctx.drawImage(catImg,x,y,s,s); ctx.restore();
+  // 品种 & 性格
+  ctx.font='700 24px "PingFang SC","Microsoft YaHei",sans-serif'; ctx.fillStyle='#5b4a3a';
+  ctx.fillText(e.cat.breed, W/2, 700);
+  ctx.font='14px "PingFang SC","Microsoft YaHei",sans-serif'; ctx.fillStyle='#8a7660';
+  ctx.fillText(e.cat.personality, W/2, 728);
+  ctx.font='12px "PingFang SC","Microsoft YaHei",sans-serif'; ctx.fillStyle='#b3a187';
+  ctx.fillText('娱乐向测试 · 非科学诊断', W/2, 776);
 }
 
 /* ---------- DOM 流程 ---------- */
@@ -208,7 +221,7 @@ const previewWrap=$('#previewWrap'), canvasBox=$('#canvasBox');
 const loading=$('#loading'), errorBox=$('#error'), result=$('#result');
 
 drop.addEventListener('click',()=>fileInput.click());
-drop.addEventListener('dragover',e=>{e.preventDefault(); drop.style.borderColor='var(--brand)';});
+drop.addEventListener('dragover',e=>{e.preventDefault(); drop.style.borderColor='var(--accent)';});
 drop.addEventListener('dragleave',()=>{drop.style.borderColor='';});
 drop.addEventListener('drop',e=>{e.preventDefault(); drop.style.borderColor=''; if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);});
 fileInput.addEventListener('change',e=>{ if(e.target.files[0]) handleFile(e.target.files[0]); });
@@ -247,37 +260,54 @@ function render(e){
   $('#energyName').textContent=e.name;
   $('#energyMeaning').textContent=e.meaning;
   $('#energyRef').textContent='溯源：'+e.ref;
-  $('#catBox').innerHTML=buildCat(e);
+  $('#catBox').innerHTML='<img src="'+e.cat.img+'" alt="'+e.cat.breed+'"/>';
   $('#catBreed').textContent=e.cat.breed;
   $('#catPersonality').textContent=e.cat.personality;
   result.hidden=false;
   result.scrollIntoView({behavior:'smooth'});
 }
 
-/* 下载分享卡 PNG */
-$('#downloadPng').addEventListener('click',()=>{
-  const e=currentEnergy(); if(!e) return;
-  const svg=buildShareCard(e);
-  const blob=new Blob([svg],{type:'image/svg+xml;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const img=new Image();
-  img.onload=()=>{
-    const c=document.createElement('canvas'); c.width=600; c.height=800;
-    c.getContext('2d').drawImage(img,0,0,600,800);
-    c.toBlob(b=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='能量猫咪_'+e.name+'.png'; a.click(); },'image/png');
-  };
-  img.src=url;
-});
-/* 下载猫咪 SVG */
-$('#downloadSvg').addEventListener('click',()=>{
-  const e=currentEnergy(); if(!e) return;
-  const blob=new Blob([buildCat(e)],{type:'image/svg+xml;charset=utf-8'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='猫咪_'+e.cat.breed+'.svg'; a.click();
-});
-$('#restart').addEventListener('click',()=>{ result.hidden=true; previewWrap.hidden=true; canvasBox.innerHTML=''; fileInput.value=''; });
-
-/* 记录当前结果供下载使用 */
 function currentEnergy(){ return _cur; }
+
+/* 完全重置：清空能量光 + 猫咪匹配，回到初始状态 */
+$('#restart').addEventListener('click',()=>{
+  _cur=null;
+  result.hidden=true; previewWrap.hidden=true;
+  canvasBox.innerHTML='';
+  $('#catBox').innerHTML='';
+  $('#catBreed').textContent='';
+  $('#catPersonality').textContent='';
+  $('#energyName').textContent='';
+  $('#energyMeaning').textContent='';
+  $('#energyRef').textContent='';
+  $('#swatch').style.background='';
+  $('#swatch').style.color='';
+  hideError();
+  fileInput.value='';
+  window.scrollTo({top:0, behavior:'smooth'});
+});
+
+/* 下载分享卡 PNG（canvas 手绘） */
+$('#downloadPng').addEventListener('click', async ()=>{
+  const e=currentEnergy(); if(!e) return;
+  try{
+    const catImg=await loadImg(e.cat.img);
+    const c=document.createElement('canvas'); c.width=600; c.height=800;
+    drawShareCard(c.getContext('2d'), e, catImg);
+    c.toBlob(b=>{
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(b);
+      a.download='能量猫咪_'+e.name+'.png'; a.click();
+    },'image/png');
+  }catch(err){ showError('生成分享卡失败：'+err.message); }
+});
+
+/* 保存猫咪原图 PNG */
+$('#downloadCat').addEventListener('click', ()=>{
+  const e=currentEnergy(); if(!e) return;
+  const a=document.createElement('a');
+  a.href=e.cat.img; a.download=e.cat.breed+'.png'; a.click();
+});
 
 /* 渲染能量表 */
 (function renderRef(){

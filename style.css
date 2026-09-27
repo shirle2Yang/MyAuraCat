@@ -1,70 +1,124 @@
+/* =====================================================================
+   能量场测猫 · 手帐治愈画风
+   奶油纸张底 + 和纸胶带 + 便签卡片 + 棕色手写感
+   ===================================================================== */
 :root{
-  --bg:#0f1226; --panel:#171c39; --panel2:#1d2348; --ink:#eef0f7; --sub:#aab1d4;
-  --line:#2a2f55; --brand:#7c5cff; --brand2:#ff8a5c; --ok:#1fb877;
+  --paper:#faf4e8;        /* 纸张底色 */
+  --paper2:#f3ead8;
+  --card:#fffdf6;         /* 便签卡 */
+  --ink:#5b4a3a;          /* 棕色正文 */
+  --ink2:#8a7660;         /* 浅棕次级 */
+  --line:#e5d6bc;         /* 虚线边框 */
+  --accent:#e8a25c;       /* 奶橘强调 */
+  --accent2:#d98f8f;      /* 奶粉 */
+  --tape:rgba(232,196,140,.55); /* 和纸胶带 */
 }
 *{box-sizing:border-box}
 body{
-  margin:0; background:radial-gradient(1200px 600px at 50% -10%,#1a1f44,var(--bg));
-  color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
-  line-height:1.6; min-height:100vh;
+  margin:0;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 27px, rgba(190,160,110,.08) 27px 28px),
+    repeating-linear-gradient(90deg, transparent 0 27px, rgba(190,160,110,.08) 27px 28px),
+    var(--paper);
+  color:var(--ink);
+  font-family:"Yuanti SC","YouYuan","PingFang SC","Microsoft YaHei",-apple-system,sans-serif;
+  line-height:1.7; min-height:100vh;
 }
-.app{max-width:640px; margin:0 auto; padding:28px 18px 56px}
+.app{max-width:640px; margin:0 auto; padding:30px 18px 56px}
 
 /* hero */
-.hero{text-align:center; padding:14px 0 22px}
-.kicker{display:inline-block; font-size:12px; letter-spacing:.14em; color:#9aa3c7; border:1px solid var(--line); padding:4px 12px; border-radius:999px; margin-bottom:14px}
-.hero h1{font-size:27px; margin:0 0 10px; background:linear-gradient(90deg,#a98bff,#ff9a6c); -webkit-background-clip:text; background-clip:text; color:transparent; line-height:1.25}
-.lead{color:var(--sub); font-size:14px; margin:0}
+.hero{text-align:center; padding:6px 0 20px; position:relative}
+.hero h1{
+  font-size:27px; margin:6px 0 16px; color:var(--ink); line-height:1.3; letter-spacing:.04em;
+  text-shadow:0 2px 0 rgba(255,255,255,.6);
+}
+.hero h1::after{content:""; display:block; width:120px; height:5px; margin:12px auto 0;
+  border-radius:4px; background:linear-gradient(90deg,var(--accent),var(--accent2)); opacity:.7}
 
-/* drop */
-.drop{margin:18px 0; border:2px dashed var(--line); border-radius:18px; background:var(--panel); transition:.18s; cursor:pointer}
-.drop:hover{border-color:var(--brand); background:var(--panel2)}
-.drop-inner{padding:38px 20px; text-align:center}
+/* 拍照教程便签 */
+.tutorial{
+  position:relative; display:inline-block; text-align:left;
+  background:var(--card); border:1.5px solid var(--line); border-radius:6px;
+  padding:14px 20px 12px; box-shadow:0 4px 14px rgba(150,120,80,.12);
+  transform:rotate(-.6deg);
+}
+.card-tape::before{
+  content:""; position:absolute; top:-11px; left:50%; transform:translateX(-50%) rotate(-2deg);
+  width:92px; height:22px; background:var(--tape); border-radius:2px;
+  box-shadow:0 1px 2px rgba(150,120,80,.15);
+}
+.tutorial-title{font-weight:700; font-size:15px; margin-bottom:4px}
+.tutorial-steps{margin:0; padding-left:1.3em; font-size:13.5px; color:var(--ink)}
+.tutorial-steps li{margin:3px 0}
+
+/* drop 上传区：胶带便签 */
+.drop{
+  margin:24px 0 18px; border:2px dashed #d8c39a; border-radius:14px;
+  background:var(--card); transition:.18s; cursor:pointer; position:relative;
+}
+.drop::after{
+  content:""; position:absolute; top:-10px; right:26px; transform:rotate(3deg);
+  width:70px; height:20px; background:rgba(217,143,143,.4); border-radius:2px;
+}
+.drop:hover{border-color:var(--accent); transform:translateY(-2px); box-shadow:0 6px 18px rgba(150,120,80,.14)}
+.drop-inner{padding:36px 20px; text-align:center}
 .drop-ico{font-size:38px}
 .drop-text{font-size:16px; margin-top:8px}
-.drop-text b{color:var(--brand2)}
-.drop-tip{color:var(--sub); font-size:12.5px; margin-top:6px}
+.drop-text b{color:var(--accent)}
+.drop-tip{color:var(--ink2); font-size:12.5px; margin-top:6px}
 
-.error{background:#3a1620; color:#ffb4c0; border:1px solid #5e2230; padding:10px 14px; border-radius:12px; margin:12px 0; font-size:13px}
-.loading{text-align:center; color:var(--brand2); padding:16px; font-size:14px}
+.error{background:#fbe9e4; color:#b3564a; border:1.5px dashed #e0a79b; padding:10px 14px; border-radius:10px; margin:12px 0; font-size:13px}
+.loading{text-align:center; color:var(--accent); padding:16px; font-size:14px}
 
 /* preview */
 .preview-wrap{margin:16px 0}
-.preview-label{font-size:12px; color:var(--sub); margin-bottom:8px}
-.canvas-box{display:flex; justify-content:center; background:#000; border-radius:14px; overflow:hidden; border:1px solid var(--line)}
-.canvas-box canvas{max-width:100%; height:auto; display:block}
+.preview-label{font-size:12px; color:var(--ink2); margin-bottom:8px; text-align:center}
+.canvas-box{display:flex; justify-content:center; background:var(--card); border-radius:14px; overflow:hidden; border:1.5px solid var(--line); padding:8px}
+.canvas-box canvas{max-width:100%; height:auto; display:block; border-radius:8px}
 
-/* result */
-.result{margin:18px 0; display:flex; flex-direction:column; gap:14px}
-.energy-card,.cat-card{background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:18px}
+/* result 便签卡 */
+.result{margin:18px 0; display:flex; flex-direction:column; gap:18px}
+.energy-card,.cat-card{
+  position:relative; background:var(--card); border:1.5px solid var(--line); border-radius:6px;
+  padding:20px 18px 16px; box-shadow:0 4px 14px rgba(150,120,80,.12);
+}
+.energy-card::before,.cat-card::before{
+  content:""; position:absolute; top:-10px; left:24px; transform:rotate(-3deg);
+  width:76px; height:20px; background:var(--tape); border-radius:2px;
+}
 .energy-card{display:flex; gap:16px; align-items:center}
-.swatch{width:64px; height:64px; border-radius:16px; flex:0 0 auto; box-shadow:0 0 24px -2px currentColor; border:1px solid rgba(255,255,255,.2)}
+.swatch{width:64px; height:64px; border-radius:14px; flex:0 0 auto; box-shadow:0 0 20px -4px currentColor; border:2px solid rgba(255,255,255,.8)}
 .energy-name{font-size:17px; font-weight:700}
-.energy-name span{color:var(--brand2)}
+.energy-name span{color:var(--accent)}
 .energy-meaning{color:var(--ink); font-size:14px; margin-top:2px}
-.energy-ref{color:var(--sub); font-size:12px; margin-top:4px}
+.energy-ref{color:var(--ink2); font-size:12px; margin-top:4px}
 
 .cat-card{text-align:center}
-.cat-title{font-size:14px; color:var(--sub); margin-bottom:6px}
+.cat-title{font-size:14px; color:var(--ink2); margin-bottom:8px}
 .cat-box{display:flex; justify-content:center}
-.cat-box svg{width:240px; height:240px}
-.cat-breed{font-size:16px; font-weight:700; margin-top:4px}
-.cat-personality{color:var(--sub); font-size:13.5px; margin-top:2px; max-width:420px; margin-left:auto; margin-right:auto}
+.cat-box img{width:240px; height:240px; object-fit:cover; border-radius:16px; box-shadow:0 6px 20px rgba(150,120,80,.2)}
+.cat-breed{font-size:16px; font-weight:700; margin-top:10px}
+.cat-personality{color:var(--ink2); font-size:13.5px; margin-top:2px; max-width:420px; margin-left:auto; margin-right:auto}
 
 .actions{display:flex; gap:10px; flex-wrap:wrap; justify-content:center}
-.btn{border:none; border-radius:12px; padding:11px 16px; font-size:14px; font-weight:600; cursor:pointer; background:var(--panel2); color:var(--ink); border:1px solid var(--line)}
-.btn:hover{filter:brightness(1.12)}
-.btn.primary{background:linear-gradient(90deg,var(--brand),var(--brand2)); border:none}
-.btn.ghost{background:transparent}
+.btn{
+  border:1.5px solid var(--line); border-radius:999px; padding:10px 18px;
+  font-size:14px; font-weight:600; cursor:pointer;
+  background:var(--card); color:var(--ink); font-family:inherit;
+  box-shadow:0 2px 6px rgba(150,120,80,.12);
+}
+.btn:hover{transform:translateY(-1px); box-shadow:0 4px 10px rgba(150,120,80,.18)}
+.btn.primary{background:linear-gradient(90deg,#f2b878,#e8a2a2); border-color:transparent; color:#fff; text-shadow:0 1px 2px rgba(150,90,60,.25)}
+.btn.ghost{background:transparent; box-shadow:none}
 
-/* ref */
-.ref{margin:22px 0}
-.ref summary{cursor:pointer; color:var(--sub); font-size:14px; padding:8px 0}
-.ref-note{color:var(--sub); font-size:12.5px; margin:8px 0 12px}
+/* ref 能量表 */
+.ref{margin:24px 0}
+.ref summary{cursor:pointer; color:var(--ink2); font-size:14px; padding:8px 0}
+.ref-note{color:var(--ink2); font-size:12.5px; margin:8px 0 12px}
 .ref-list{list-style:none; padding:0; margin:0; display:grid; gap:8px}
-.ref-list li{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:10px 12px; font-size:13px}
+.ref-list li{background:var(--card); border:1.5px solid var(--line); border-radius:10px; padding:10px 12px; font-size:13px}
 .ref-list .r-name{font-weight:700}
-.ref-list .r-dot{display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; vertical-align:middle}
-.ref-list .r-ref{color:var(--sub); font-size:12px}
+.ref-list .r-dot{display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; vertical-align:middle; border:1px solid rgba(0,0,0,.08)}
+.ref-list .r-ref{color:var(--ink2); font-size:12px}
 
-.foot{text-align:center; color:#7e86ad; font-size:12px; margin-top:30px; border-top:1px solid var(--line); padding-top:16px}
+.foot{text-align:center; color:#b3a187; font-size:12px; margin-top:30px; border-top:1.5px dashed var(--line); padding-top:16px}
